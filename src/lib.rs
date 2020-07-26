@@ -14,16 +14,8 @@ pub struct Priority(imp::Priority);
 
 impl Priority {
     // TODO: consider declaring these as `const fn`
-    /// A relatively high priority level
-    ///
-    /// Be particularly careful with giving a process this priority level: Any
-    /// process with a lower level will be halted until it pauses. Therefore,
-    /// make sure any work is breif, and you use OS APIs to wait
-    /// ([`std::thread::sleep`] instead of `loop {}`)
-    pub fn high() -> Self {
-        Self(imp::Priority::high())
-    }
-    /// The normal priority level
+    /// The priority level given to normal processes; The default priority
+    /// level.
     ///
     /// ```rust
     /// # use meek::{Process, Priority};
@@ -33,13 +25,21 @@ impl Priority {
     pub fn normal() -> Self {
         Self(imp::Priority::normal())
     }
-    /// A relatively low priority level
+    /// Raise the priority level.
     ///
-    /// A process given this priority level won't continue so long as any other
-    /// programs (with a higher level) have work to do. It can be used for
-    /// screen-savers e.t.c.
-    pub fn low() -> Self {
-        Self(imp::Priority::low())
+    /// Be particularly careful with giving processes higher priority levels:
+    /// Any process with a lower level will be halted until it pauses.
+    /// Therefore, make sure any work it does is breif, and it uses OS APIs for
+    /// delays ([`std::thread::sleep`] instead of `loop {}`)
+    pub fn higher(&self) -> impl Iterator<Item = Self> {
+        self.0.higher().map(Self)
+    }
+    /// Lower the priority level.
+    ///
+    /// Processes with lower priority levels will pause if other processes need
+    /// to do work. They can be used for screen-savers e.t.c.
+    pub fn lower(&self) -> impl Iterator<Item = Self> {
+        self.0.lower().map(Self)
     }
 }
 

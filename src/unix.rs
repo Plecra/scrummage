@@ -16,14 +16,30 @@ pub(crate) struct Priority {
 }
 
 impl Priority {
-    pub fn high() -> Self {
-        Self { niceness: -10 }
+    pub fn higher(&self) -> impl Iterator<Item = Self> {
+        let mut niceness = self.niceness;
+        core::iter::from_fn(move || {
+            if niceness > -20 {
+                niceness -= 1;
+                Some(Self { niceness })
+            } else {
+                None
+            }
+        })
     }
     pub fn normal() -> Self {
         Self { niceness: 0 }
     }
-    pub fn low() -> Self {
-        Self { niceness: 10 }
+    pub fn lower(&self) -> impl Iterator<Item = Self> {
+        let mut niceness = self.niceness;
+        core::iter::from_fn(move || {
+            if niceness < 19 {
+                niceness += 1;
+                Some(Self { niceness })
+            } else {
+                None
+            }
+        })
     }
 }
 

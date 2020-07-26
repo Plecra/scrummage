@@ -4,7 +4,7 @@ Control the scheduling of your processes to make your programs more reponsive!
 
 ```rust
 scrummage::Process::current()
-    .set_priority(scrummage::Priority::low())
+    .set_priority(scrummage::Priority::normal().lower().last().unwrap())
     .expect("couldn't set own thread priority");
 ```
 
