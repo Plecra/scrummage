@@ -49,7 +49,6 @@ impl Process<'_> {
         Process {
             // Safety: `getpid` is always safe to call
             pid: unsafe { getpid() } as u32,
-
             marker: core::marker::PhantomData,
         }
     }
