@@ -1,0 +1,19 @@
+[package]
+name = "scrummage"
+version = "0.1.0"
+authors = ["Marli Frost <marli@frost.red>"]
+edition = "2018"
+description = "Fight over OS process prioritisation"
+readme = "README.md"
+repository = "https://github.com/Plecra/meek"
+license = "MIT OR Apache-2.0 OR Zlib"
+keywords = ["scheduling", "prority", "prioritisation", "thread", "nice", "niceness"]
+categories = ["concurrency", "os"]
+
+[features]
+default = ["std"]
+std = []
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
