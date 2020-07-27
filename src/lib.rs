@@ -26,7 +26,7 @@ impl Priority {
     /// level.
     ///
     /// ```rust
-    /// # use meek::{Process, Priority};
+    /// # use scrummage::{Process, Priority};
     /// assert_eq!(Process::current().priority().unwrap(), Priority::normal(),
     ///            "I'm normal! Normal I tell you!");
     /// ```
