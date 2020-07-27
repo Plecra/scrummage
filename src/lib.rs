@@ -1,5 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+macro_rules! doctest {
+    ($x:expr) => {
+        #[doc = $x]
+        extern {}
+    };
+}
+doctest!(include_str!("../README.md"));
+
 #[cfg_attr(unix, path = "./unix.rs")]
 mod imp;
 
