@@ -1,4 +1,25 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+//! A thin abstraction over OS process scheduling APIs.
+//!
+//! By signalling the priority of our processes to the operating system, we
+//! gain more control over our program's resource usage, and which tasks get
+//! completed first.
+//!
+//! For example, we can configure our UI to preempt background tasks by giving
+//! it a higher priority:
+//!
+//! ```rust
+//! # use scrummage::{Process, Priority};
+//! # let mut busy_child_process = std::process::Command::new("echo").spawn().unwrap();
+//! let me = Process::current().priority().unwrap();
+//! let boring_work = me.lower().next().expect("no lower priority available");
+//! // It's fine if the `busy_child_process` has already finished
+//! let _ = Process::from(&mut busy_child_process)
+//!     .set_priority(boring_work);
+//! ```
+//!
+//! This will tell the OS to make sure `me` is always given all the resources
+//! it needs, making it snappier. 
 
 macro_rules! doctest {
     ($x:expr) => {
@@ -54,29 +75,23 @@ impl Priority {
 #[derive(Debug)]
 /// A process running on this machine.
 ///
-/// These values should be treated as references to the processes held by the
-/// OS. As we don't own the process ourselves, there is no guarantee that the
-/// [`Process`] "reference" is still valid: someone else could've killed it.
-/// The methods return a [`NotFound`] error if they are ever called on a dead
-/// process.
+/// Because the OS owns the process this "refers" to, we can't know it's valid:
+/// someone could've killed it. Therefore, the methods return [`NotFound`] if
+/// they are ever called on a dead process.
 pub struct Process<'a>(imp::Process<'a>);
 
 impl Process<'_> {
     /// Get the currently running process
     ///
-    /// Note that this is will last for `'static`, since there is no way for
-    /// the value to be used *after this process dies*.
+    /// Note that this is will last for `'static`, since the OS process it
+    /// refers to contains this very struct, and if it died, then this struct
+    /// must have died with it.
     pub fn current() -> Process<'static> {
         Process(imp::Process::current())
     }
     /// Update the priority of this process
-    ///
-    /// Each platform has a set of rules around who can set whose priority,
-    /// and you should check the documentation for your platform to make sure
-    /// you are setting up the right permissions. [`Error`] doesn't expose
-    /// the reason for the error (yet? File an issue if this would be useful
-    /// for you).
-    pub fn set_priority(&mut self, priority: Priority) -> Result<(), Error> {
+
+    pub fn set_priority(&mut self, priority: Priority) -> Result<(), Unchanged> {
         self.0.set_priority(priority.0)
     }
     /// Fetch the priority of this process
@@ -100,9 +115,9 @@ impl<'a> From<&'a mut std::process::Child> for Process<'a> {
 #[derive(Debug)]
 pub struct NotFound;
 
-// TODO: Choose a more descriptive name for this type
+/// The reason the priority of a process couldn't be set.
 #[derive(Debug)]
-pub enum Error {
+pub enum Unchanged {
     // This could be much cleaner with [enum variant types], which would
     // let `Process::priority` return `Result<Priority, Error::NotFound>`
     //
@@ -110,10 +125,15 @@ pub enum Error {
     NotFound(NotFound),
     /// The [`Process`] handle didn't have the suitable permissions to
     /// set priority.
-    NotAllowed,
+    /// 
+    /// Each platform has a set of rules around who can set whose priority,
+    /// and you should check the documentation for your platform to make sure
+    /// you are setting up the right permissions. If the details of this error
+    /// would be useful for you, do file an issue about your use case! 😁 
+    PermissionDenied,
 }
 
-impl From<NotFound> for Error {
+impl From<NotFound> for Unchanged {
     fn from(n: NotFound) -> Self {
         Self::NotFound(n)
     }
@@ -125,11 +145,11 @@ impl core::fmt::Display for NotFound {
     }
 }
 
-impl core::fmt::Display for Error {
+impl core::fmt::Display for Unchanged {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             Self::NotFound(n) => core::fmt::Display::fmt(n, f),
-            Self::NotAllowed => f.write_str("missing permissions to set priority"),
+            Self::PermissionDenied => f.write_str("missing permissions to set priority"),
         }
     }
 }
@@ -138,4 +158,4 @@ impl core::fmt::Display for Error {
 impl std::error::Error for NotFound {}
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {}
+impl std::error::Error for Unchanged {}

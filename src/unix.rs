@@ -1,4 +1,4 @@
-use crate::{Error, NotFound};
+use crate::{Unchanged, NotFound};
 use libc::{getpid, getpriority, setpriority, PRIO_PROCESS};
 
 #[derive(Debug)]
@@ -68,14 +68,14 @@ impl Process<'_> {
             marker: core::marker::PhantomData,
         }
     }
-    pub fn set_priority(&mut self, priority: Priority) -> Result<(), Error> {
+    pub fn set_priority(&mut self, priority: Priority) -> Result<(), Unchanged> {
         // Safety: `setpriority` checks its arguments
         if unsafe { setpriority(PRIO_PROCESS, self.pid, priority.niceness) } == 0 {
             Ok(())
         } else {
             match errno() {
-                libc::ESRCH => Err(Error::NotFound(NotFound)),
-                libc::EACCES | libc::EPERM => Err(Error::NotAllowed),
+                libc::ESRCH => Err(Unchanged::NotFound(NotFound)),
+                libc::EACCES | libc::EPERM => Err(Unchanged::PermissionDenied),
                 errno => unexpected_err(errno),
             }
         }
