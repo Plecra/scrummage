@@ -12,8 +12,11 @@ categories = ["concurrency", "os"]
 
 [features]
 default = ["std"]
-std = []
+std = ["winapi/std", "libc/std"]
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2"
+libc = { version = "0.2", default-features = false }
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", default-features = false, features = ["errhandlingapi", "processthreadsapi", "winbase"] }
 
