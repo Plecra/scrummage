@@ -10,7 +10,8 @@
 //!
 //! ```rust
 //! # use scrummage::{Process, Priority};
-//! # let mut busy_child_process = std::process::Command::new("echo").spawn().unwrap();
+//! # // `whoami` seems to shared between UNIX and Windows systems
+//! # let mut busy_child_process = std::process::Command::new("whoami").spawn().unwrap();
 //! let me = Process::current().priority().unwrap();
 //! let boring_work = me.lower().next().expect("no lower priority available");
 //! // It's fine if the `busy_child_process` has already finished
@@ -29,6 +30,7 @@ macro_rules! doctest {
 }
 doctest!(include_str!("../README.md"));
 
+#[cfg_attr(windows, path = "./windows.rs")]
 #[cfg_attr(unix, path = "./unix.rs")]
 mod imp;
 
